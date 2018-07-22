@@ -10,25 +10,26 @@ import Foundation
 import UIKit
 import CoreBluetooth
 
-
 var txCharacteristic : CBCharacteristic?
 var rxCharacteristic : CBCharacteristic?
 var blePeripheral : CBPeripheral?
 var characteristicASCIIValue = NSString()
-
-
+var textArray = [String]()
 
 class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate, UITableViewDelegate, UITableViewDataSource{
     
     //Data
     var centralManager : CBCentralManager!
+    var bleService: CBService?
     var RSSIs = [NSNumber]()
     var data = NSMutableData()
     var writeData: String = ""
     var peripherals: [CBPeripheral] = []
     var characteristicValue = [CBUUID: NSData]()
+    var peripheralsUUIDsFound = NSMutableSet()
     var timer = Timer()
     var characteristics = [String : CBCharacteristic]()
+    let TxMaxCharacter = 20
     
     //UI
     @IBOutlet weak var baseTableView: UITableView!
@@ -103,7 +104,6 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
         }
     }
     
-    
     func restoreCentralManager() {
         //Restores Central Manager delegate if something went wrong
         centralManager?.delegate = self
@@ -142,8 +142,8 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("*****************************")
         print("Connection complete")
-        print("Peripheral info: \(String(describing: blePeripheral))")
-        
+        print("Peripheral info: \(blePeripheral?.description ?? "No ble peripheral description")")
+
         //Stop Scan- We don't need to scan once we've connected to a peripheral. We got what we came for.
         centralManager?.stopScan()
         print("Scan Stopped")
@@ -263,7 +263,6 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
         }
     }
     
-    
     func peripheral(_ peripheral: CBPeripheral, didDiscoverDescriptorsFor characteristic: CBCharacteristic, error: Error?) {
         print("*******************************************************")
         
@@ -274,14 +273,12 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
         if ((characteristic.descriptors) != nil) {
             
             for x in characteristic.descriptors!{
-                let descript = x as CBDescriptor!
-                print("function name: DidDiscoverDescriptorForChar \(String(describing: descript?.description))")
-                print("Rx Value \(String(describing: rxCharacteristic?.value))")
-                print("Tx Value \(String(describing: txCharacteristic?.value))")
-            }
+                let descript = x as CBDescriptor?
+                print("function name: DidDiscoverDescriptorForChar \(descript?.description ?? "No description available."))")
+                print("Rx Value \(rxCharacteristic?.value ?? Data.init(count: 0))")
+                print("Tx Value \(txCharacteristic?.value ?? Data.init(count: 0))")            }
         }
     }
-    
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         print("*******************************************************")
@@ -297,8 +294,6 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
             print ("Subscribed. Notification has begun for: \(characteristic.uuid)")
         }
     }
-    
-    
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("Disconnected")
@@ -353,22 +348,38 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
      This is where we kick off the scan if Bluetooth is turned on.
      */
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        if central.state == CBManagerState.poweredOn {
-            // We will just handle it the easy way here: if Bluetooth is on, proceed...start scan!
+        switch central.state {
+        case .unknown:
+            displayPoweredOffAlert()
+            break
+        case .unauthorized:
+            displayPoweredOffAlert()
+            break
+        case .resetting:
+            displayPoweredOffAlert()
+            break
+        case .unsupported:
+            displayPoweredOffAlert()
+            break
+        case .poweredOff:
+            displayPoweredOffAlert()
+            break
+        case .poweredOn:
             print("Bluetooth Enabled")
             startScan()
-            
-        } else {
-            //If Bluetooth is off, display a UI alert message saying "Bluetooth is not enable" and "Make sure that your bluetooth is turned on"
-            print("Bluetooth Disabled- Make sure your Bluetooth is turned on")
-            
-            let alertVC = UIAlertController(title: "Bluetooth is not enabled", message: "Make sure that your bluetooth is turned on", preferredStyle: UIAlertControllerStyle.alert)
-            let action = UIAlertAction(title: "ok", style: UIAlertActionStyle.default, handler: { (action: UIAlertAction) -> Void in
-                self.dismiss(animated: true, completion: nil)
-            })
-            alertVC.addAction(action)
-            self.present(alertVC, animated: true, completion: nil)
+            break
         }
+    }
+    
+    func displayPoweredOffAlert() {
+        print("Bluetooth Disabled- Make sure your Bluetooth is turned on")
+        
+        let alertVC = UIAlertController(title: "Bluetooth is not enabled", message: "Make sure that your bluetooth is turned on", preferredStyle: UIAlertControllerStyle.alert)
+        let action = UIAlertAction(title: "ok", style: UIAlertActionStyle.default, handler: { (action: UIAlertAction) -> Void in
+            self.dismiss(animated: true, completion: nil)
+        })
+        alertVC.addAction(action)
+        self.present(alertVC, animated: true, completion: nil)
     }
 }
 
