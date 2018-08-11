@@ -19,17 +19,17 @@ var textArray = [String]()
 class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate, UITableViewDelegate, UITableViewDataSource{
     
     //Data
-    var centralManager : CBCentralManager!
-    var bleService: CBService?
-    var RSSIs = [NSNumber]()
-    var data = NSMutableData()
-    var writeData: String = ""
-    var peripherals: [CBPeripheral] = []
-    var characteristicValue = [CBUUID: NSData]()
-    var peripheralsUUIDsFound = NSMutableSet()
-    var timer = Timer()
-    var characteristics = [String : CBCharacteristic]()
-    let TxMaxCharacter = 20
+    @objc var centralManager : CBCentralManager!
+    @objc var bleService: CBService?
+    @objc var RSSIs = [NSNumber]()
+    @objc var data = NSMutableData()
+    @objc var writeData: String = ""
+    @objc var peripherals: [CBPeripheral] = []
+    @objc var characteristicValue = [CBUUID: NSData]()
+    @objc var peripheralsUUIDsFound = NSMutableSet()
+    @objc var timer = Timer()
+    @objc var characteristics = [String : CBCharacteristic]()
+    @objc let TxMaxCharacter = 20
     
     //UI
     @IBOutlet weak var baseTableView: UITableView!
@@ -71,7 +71,7 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
     
     /*Okay, now that we have our CBCentalManager up and running, it's time to start searching for devices. You can do this by calling the "scanForPeripherals" method.*/
     
-    func startScan() {
+    @objc func startScan() {
         peripherals = []
         print("Now Scanning...")
         self.timer.invalidate()
@@ -80,13 +80,13 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
     }
     
     /*We also need to stop scanning at some point so we'll also create a function that calls "stopScan"*/
-    func cancelScan() {
+    @objc func cancelScan() {
         self.centralManager?.stopScan()
         print("Scan Stopped")
         print("Number of Peripherals Found: \(peripherals.count)")
     }
     
-    func refreshScanView() {
+    @objc func refreshScanView() {
         baseTableView.reloadData()
     }
     
@@ -96,7 +96,7 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
      This cancels any subscriptions if there are any, or straight disconnects if not.
      (didUpdateNotificationStateForCharacteristic will cancel the connection if a subscription is involved)
      */
-    func disconnectFromDevice () {
+    @objc func disconnectFromDevice () {
         if blePeripheral != nil {
             // We have a connection to the device but we are not subscribed to the Transfer Characteristic for some reason.
             // Therefore, we will just disconnect from the peripheral
@@ -104,7 +104,7 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
         }
     }
     
-    func restoreCentralManager() {
+    @objc func restoreCentralManager() {
         //Restores Central Manager delegate if something went wrong
         centralManager?.delegate = self
     }
@@ -130,7 +130,7 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
     //Peripheral Connections: Connecting, Connected, Disconnected
     
     //-Connection
-    func connectToDevice () {
+    @objc func connectToDevice () {
         centralManager?.connect(blePeripheral!, options: nil)
     }
     
@@ -178,7 +178,7 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
         }
     }
     
-    func disconnectAllConnection() {
+    @objc func disconnectAllConnection() {
         centralManager.cancelPeripheralConnection(blePeripheral!)
     }
     
@@ -371,11 +371,11 @@ class BLECentralViewController : UIViewController, CBCentralManagerDelegate, CBP
         }
     }
     
-    func displayPoweredOffAlert() {
+    @objc func displayPoweredOffAlert() {
         print("Bluetooth Disabled- Make sure your Bluetooth is turned on")
         
-        let alertVC = UIAlertController(title: "Bluetooth is not enabled", message: "Make sure that your bluetooth is turned on", preferredStyle: UIAlertControllerStyle.alert)
-        let action = UIAlertAction(title: "ok", style: UIAlertActionStyle.default, handler: { (action: UIAlertAction) -> Void in
+        let alertVC = UIAlertController(title: "Bluetooth is not enabled", message: "Make sure that your bluetooth is turned on", preferredStyle: UIAlertController.Style.alert)
+        let action = UIAlertAction(title: "ok", style: UIAlertAction.Style.default, handler: { (action: UIAlertAction) -> Void in
             self.dismiss(animated: true, completion: nil)
         })
         alertVC.addAction(action)
