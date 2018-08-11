@@ -22,8 +22,8 @@ class UartModuleViewController: UIViewController, CBPeripheralManagerDelegate, U
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var switchUI: UISwitch!
     //Data
-    var peripheralManager: CBPeripheralManager?
-    var peripheral: CBPeripheral!
+    @objc var peripheralManager: CBPeripheralManager?
+    @objc var peripheral: CBPeripheral!
     private var consoleAsciiText:NSAttributedString? = NSAttributedString(string: "")
     
     
@@ -62,15 +62,15 @@ class UartModuleViewController: UIViewController, CBPeripheralManagerDelegate, U
         
     }
     
-    func updateIncomingData () {
+    @objc func updateIncomingData () {
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "Notify"), object: nil , queue: nil){
             notification in
             let appendString = "\n"
             let myFont = UIFont(name: "Helvetica Neue", size: 15.0)
-            let myAttributes2 = [NSFontAttributeName: myFont!, NSForegroundColorAttributeName: UIColor.red]
-            let attribString = NSAttributedString(string: "[Incoming]: " + (characteristicASCIIValue as String) + appendString, attributes: myAttributes2)
+            let myAttributes2 = [convertFromNSAttributedStringKey(NSAttributedString.Key.font): myFont!, convertFromNSAttributedStringKey(NSAttributedString.Key.foregroundColor): UIColor.red]
+            let attribString = NSAttributedString(string: "[Incoming]: " + (characteristicASCIIValue as String) + appendString, attributes: convertToOptionalNSAttributedStringKeyDictionary(myAttributes2))
             let newAsciiText = NSMutableAttributedString(attributedString: self.consoleAsciiText!)
-            self.baseTextView.attributedText = NSAttributedString(string: characteristicASCIIValue as String , attributes: myAttributes2)
+            self.baseTextView.attributedText = NSAttributedString(string: characteristicASCIIValue as String , attributes: convertToOptionalNSAttributedStringKeyDictionary(myAttributes2))
             
             newAsciiText.append(attribString)
             
@@ -87,17 +87,17 @@ class UartModuleViewController: UIViewController, CBPeripheralManagerDelegate, U
     
     
     
-    func outgoingData () {
+    @objc func outgoingData () {
         let appendString = "\n"
         
         let inputText = inputTextField.text
         
         let myFont = UIFont(name: "Helvetica Neue", size: 15.0)
-        let myAttributes1 = [NSFontAttributeName: myFont!, NSForegroundColorAttributeName: UIColor.blue]
+        let myAttributes1 = [convertFromNSAttributedStringKey(NSAttributedString.Key.font): myFont!, convertFromNSAttributedStringKey(NSAttributedString.Key.foregroundColor): UIColor.blue]
         
         writeValue(data: inputText!)
         
-        let attribString = NSAttributedString(string: "[Outgoing]: " + inputText! + appendString, attributes: myAttributes1)
+        let attribString = NSAttributedString(string: "[Outgoing]: " + inputText! + appendString, attributes: convertToOptionalNSAttributedStringKeyDictionary(myAttributes1))
         let newAsciiText = NSMutableAttributedString(attributedString: self.consoleAsciiText!)
         newAsciiText.append(attribString)
         
@@ -109,7 +109,7 @@ class UartModuleViewController: UIViewController, CBPeripheralManagerDelegate, U
     }
     
     // Write functions
-    func writeValue(data: String){
+    @objc func writeValue(data: String){
         let valueString = (data as NSString).data(using: String.Encoding.utf8.rawValue)
         //change the "data" to valueString
         if let blePeripheral = blePeripheral{
@@ -119,7 +119,7 @@ class UartModuleViewController: UIViewController, CBPeripheralManagerDelegate, U
         }
     }
     
-    func writeCharacteristic(val: Int8){
+    @objc func writeCharacteristic(val: Int8){
         var val = val
         let ns = NSData(bytes: &val, length: MemoryLayout<Int8>.size)
         blePeripheral!.writeValue(ns as Data, for: txCharacteristic!, type: CBCharacteristicWriteType.withResponse)
@@ -190,3 +190,14 @@ class UartModuleViewController: UIViewController, CBPeripheralManagerDelegate, U
     }
 }
 
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromNSAttributedStringKey(_ input: NSAttributedString.Key) -> String {
+	return input.rawValue
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalNSAttributedStringKeyDictionary(_ input: [String: Any]?) -> [NSAttributedString.Key: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (NSAttributedString.Key(rawValue: key), value)})
+}
